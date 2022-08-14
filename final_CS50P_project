@@ -1,0 +1,87 @@
+from bs4 import BeautifulSoup
+import requests
+import lxml
+import re
+import urllib.request
+import sys
+
+def main():
+    list = []
+    age = int(input('To get younger all you have to do is tell me how old you are. '))
+    open_top100(list)
+
+    new_age = get_song(age)
+    song = (list[new_age])
+    new_song = re.sub(r'.', '', song, count=4)
+    print(new_song)
+
+    get_video(new_song)
+
+    next_song(age, song, list, new_age)
+
+def open_top100(list):
+    address = ('https://www.billboard.com/charts/hot-100/')
+    reat = requests.get(address)
+
+    doc = BeautifulSoup(reat.content, 'lxml')
+    structured_doc = doc.prettify()
+
+    first_song = doc.find('h3').text.strip()
+    song = ('1. ' + (first_song))
+    list.append(song)
+
+    all_doc = doc.findAll('h3', class_ = 'c-title a-no-trucate a-font-primary-bold-s u-letter-spacing-0021 lrv-u-font-size-18@tablet lrv-u-font-size-16 u-line-height-125 u-line-height-normal@mobile-max a-truncate-ellipsis u-max-width-330 u-max-width-230@tablet-only')
+
+    num = 2
+    for i in all_doc:
+        songs = (str(num) + '.' + ' ' + (i.text).strip())
+        list.append(songs)
+        num = num + 1
+    a = open('Billboard_Hot_100.txt', 'w+')
+    a.write('BILLBOARD HOT 100\n')
+    for i in list:
+        a.write(i)
+        a.write('\n')
+    a.close()
+
+
+def get_song(age):
+
+    if age < 1:
+        sys.exit('You are too young to be listening to this type of music, start with Chopin')
+    elif age > 0 and age < 100:
+        age = abs(age-90)
+        print('Lets start getting you younger, start with this song!')
+    else:
+        age = 0
+        print('Lets start at the top!')
+
+    return(age)
+
+def get_video(new_song):
+    #help from the code father
+    html = urllib.request.urlopen('http://www.youtube.com/results?search_query=' + new_song.replace(' ',''))
+    video_address = re.findall('watch\?v=(\S{11})', html.read().decode())
+    print('http://www.youtube.com/results?search_query=' + video_address[1])
+
+def next_song(age, song, list, new_age):
+    answer = None
+    while answer != 'no':
+        answer = input('Would you like to continue to get younger(yes or no)?  ')
+        if answer == 'yes':
+            age = age + 1
+            new_age = get_song(age)
+            song = (list[new_age])
+            new_song = re.sub(r'.', '', song, count=4)
+            get_video(new_song)
+
+        elif answer == 'no':
+            print('Wow! You already look younger! ')
+            break
+
+        else:
+            print('Please answer yes or no ')
+
+
+if __name__ == '__main__':
+    main()
